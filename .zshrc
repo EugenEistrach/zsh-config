@@ -30,7 +30,6 @@ else
 fi
 
 zstyle ':completion:*' menu select
-zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # Case insensitive tab completion
 # Fix for list-colors parameter expansion
 export LS_COLORS='di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
 zstyle ':completion:*' list-colors "${LS_COLORS}" # Colored completion
@@ -38,6 +37,19 @@ zstyle ':completion:*' rehash true                # Automatically find new execu
 zstyle ':completion:*' accept-exact '*(N)'
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path ~/.zsh/cache
+
+# Enhanced file path completion
+zstyle ':completion:*' special-dirs true
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' list-suffixes true
+zstyle ':completion:*' expand prefix suffix
+setopt COMPLETE_IN_WORD # Complete from both ends of a word
+setopt PATH_DIRS        # Perform path search even on command names with slashes
+setopt AUTO_MENU        # Show completion menu on a successive tab press
+setopt AUTO_LIST        # Automatically list choices on ambiguous completion
+setopt AUTO_PARAM_SLASH # If completed parameter is a directory, add a trailing slash
+setopt ALWAYS_TO_END    # Move cursor to the end of a completed word
+
 setopt COMPLETE_ALIASES
 
 # Key bindings
@@ -70,15 +82,45 @@ update_plugin() {
 }
 
 # Install/update plugins (uncomment to run)
-# update_plugin "zsh-users/zsh-autosuggestions"
-# update_plugin "zsh-users/zsh-completions"
-# update_plugin "zdharma-continuum/fast-syntax-highlighting"
+#update_plugin "zsh-users/zsh-autosuggestions"
+#update_plugin "zsh-users/zsh-completions"
+#update_plugin "zdharma-continuum/fast-syntax-highlighting"
 
 # Source plugins if they exist
 [ -f ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 [ -f ~/.zsh/plugins/zsh-completions/zsh-completions.plugin.zsh ] && source ~/.zsh/plugins/zsh-completions/zsh-completions.plugin.zsh
 # Use fast-syntax-highlighting instead of regular syntax highlighting
 [ -f ~/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh ] && source ~/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
+
+# Configure zsh-autosuggestions for better file path handling
+if [ -f ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+  # Use more aggressive completion approach
+  export ZSH_AUTOSUGGEST_STRATEGY=(history completion path_completion)
+  # Make autosuggestions appear faster (default is 0.15)
+  export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
+  export ZSH_AUTOSUGGEST_USE_ASYNC=true
+
+  # Custom strategy to suggest files in current directory
+  _zsh_autosuggest_strategy_path_completion() {
+    # Only attempt path completion if buffer starts with ./
+    if [[ $1 == ./* ]]; then
+      local prefix="${1##*/}"
+      local dir="$(pwd)"
+      local files=("$dir"/*(N))
+      local file
+      for file in "${files[@]}"; do
+        file="${file##*/}"
+        if [[ "$file" == "$prefix"* && "$file" != "$prefix" ]]; then
+          echo "./$file"
+          return
+        fi
+      done
+    fi
+  }
+
+  # Make suggestion style more visible
+  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=8,bold"
+fi
 
 # fzf configuration (similar to fzf.fish)
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -176,6 +218,11 @@ function extract {
   else
     echo "'$1' is not a valid file"
   fi
+}
+
+# Interactive alias explorer
+function aliases() {
+  alias | fzf --height 50% | cut -d= -f1 | tr -d "'" | xargs -I{} echo "💡 {} is defined as: $(alias {} | cut -d= -f2 | tr -d "'")"
 }
 
 # ===== Environment Variables =====

@@ -287,6 +287,11 @@ if command -v zoxide &>/dev/null; then
   eval "$(zoxide init zsh)"
 fi
 
+# Load zsh-you-should-use for alias reminders
+if [ -f ~/.zsh/plugins/zsh-you-should-use/you-should-use.plugin.zsh ]; then
+  source ~/.zsh/plugins/zsh-you-should-use/you-should-use.plugin.zsh
+fi
+
 # ===== Starship Prompt =====
 # Initialize Starship prompt if installed
 if command -v starship &>/dev/null; then

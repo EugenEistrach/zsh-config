@@ -1,0 +1,29 @@
+# Zsh compiled files
+*.zwc
+*.zwc.old
+
+# Zsh cache files
+.zcompdump*
+.zsh_history
+.zsh_sessions/
+.zsh/.zcompdump*
+.zsh/cache/
+
+# macOS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Personal configuration that shouldn't be shared
+local_config.zsh
+secrets.zsh
+
+# Backup files
+*.bak
+*~

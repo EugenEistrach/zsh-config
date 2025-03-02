@@ -242,12 +242,8 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 # ===== Lazy Loading =====
 # Node Version Manager with lazy loading
 export NVM_DIR="$HOME/.nvm"
-# Lazy load nvm
-nvm() {
-  unfunction "$0"
-  [ -s "$(brew --prefix nvm)/nvm.sh" ] && source "$(brew --prefix nvm)/nvm.sh"
-  $0 "$@"
-}
+
+[ -s "$(brew --prefix nvm)/nvm.sh" ] && source "$(brew --prefix nvm)/nvm.sh"
 
 # Auto-switch nvm version on directory change
 autoload -U add-zsh-hook

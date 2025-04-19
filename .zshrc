@@ -133,42 +133,42 @@ fi
 
 # ===== Modern CLI Tools =====
 # Use eza instead of ls if available
-if command -v eza &>/dev/null; then
-  alias ls='eza --icons'
-  alias ll='eza --icons -la'
-  alias la='eza --icons -a'
-  alias lt='eza --icons -T'
-  alias lg='eza --icons -la --git'
-else
-  # Fallback to exa if available
-  if command -v exa &>/dev/null; then
-    alias ls='exa --icons'
-    alias ll='exa --icons -la'
-    alias la='exa --icons -a'
-    alias lt='exa --icons -T'
-    alias lg='exa --icons -la --git'
-  else
-    alias ls='ls -G'
-    alias ll='ls -lah'
-    alias la='ls -A'
-    alias l='ls -CF'
-  fi
-fi
+# if command -v eza &>/dev/null; then
+#   alias ls='eza --icons'
+#   alias ll='eza --icons -la'
+#   alias la='eza --icons -a'
+#   alias lt='eza --icons -T'
+#   alias lg='eza --icons -la --git'
+# else
+#   # Fallback to exa if available
+#   if command -v exa &>/dev/null; then
+#     alias ls='exa --icons'
+#     alias ll='exa --icons -la'
+#     alias la='exa --icons -a'
+#     alias lt='exa --icons -T'
+#     alias lg='exa --icons -la --git'
+#   else
+#     alias ls='ls -G'
+#     alias ll='ls -lah'
+#     alias la='ls -A'
+#     alias l='ls -CF'
+#   fi
+# fi
 
 # Use bat instead of cat if available
-if command -v bat &>/dev/null; then
-  alias cat='bat'
-fi
+# if command -v bat &>/dev/null; then
+#   alias cat='bat'
+# fi
 
 # Use ripgrep instead of grep if available
-if command -v rg &>/dev/null; then
-  alias grep='rg'
-fi
+# if command -v rg &>/dev/null; then
+#   alias grep='rg'
+# fi
 
 # Use fd instead of find if available
-if command -v fd &>/dev/null; then
-  alias find='fd'
-fi
+# if command -v fd &>/dev/null; then
+#   alias find='fd'
+# fi
 
 # ===== Aliases =====
 # Navigation aliases

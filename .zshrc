@@ -1,3 +1,5 @@
+# Add deno completions to search path
+if [[ ":$FPATH:" != *":/Users/eugeneistrach/completions:"* ]]; then export FPATH="/Users/eugeneistrach/completions:$FPATH"; fi
 # Performance profiling (uncomment to enable)
 # zmodload zsh/zprof
 
@@ -13,6 +15,8 @@ setopt HIST_REDUCE_BLANKS   # Remove superfluous blanks
 setopt HIST_VERIFY          # Verify history expansion
 setopt EXTENDED_HISTORY     # Record timestamp of command
 setopt HIST_IGNORE_SPACE    # Don't record commands starting with space
+setopt HIST_FIND_NO_DUPS    # Don't show duplicates in search
+setopt HIST_EXPIRE_DUPS_FIRST # Expire duplicates first when trimming history
 
 # Directory navigation (similar to Fish)
 setopt AUTO_CD           # cd by typing directory name
@@ -61,6 +65,10 @@ bindkey '^[[F' end-of-line                       # End key
 bindkey '^[[3~' delete-char                      # Delete key
 bindkey '^[[1;5C' forward-word                   # Ctrl+Right
 bindkey '^[[1;5D' backward-word                  # Ctrl+Left
+bindkey '^[[1;3C' forward-word                   # Alt+Right (macOS)
+bindkey '^[[1;3D' backward-word                  # Alt+Left (macOS)
+bindkey '^R' history-incremental-search-backward # Ctrl+R for history search
+bindkey '^S' history-incremental-search-forward  # Ctrl+S for forward history search
 
 # ===== Plugin Management =====
 # Using a minimal approach with git submodules
@@ -92,34 +100,16 @@ update_plugin() {
 # Use fast-syntax-highlighting instead of regular syntax highlighting
 [ -f ~/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh ] && source ~/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
 
-# Configure zsh-autosuggestions for better file path handling
+# Configure zsh-autosuggestions for better performance and less interference
 if [ -f ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
-  # Use more aggressive completion approach
-  export ZSH_AUTOSUGGEST_STRATEGY=(history completion path_completion)
+  # Use less aggressive strategy to avoid terminal interference
+  export ZSH_AUTOSUGGEST_STRATEGY=(history completion)
   # Make autosuggestions appear faster (default is 0.15)
   export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
   export ZSH_AUTOSUGGEST_USE_ASYNC=true
 
-  # Custom strategy to suggest files in current directory
-  _zsh_autosuggest_strategy_path_completion() {
-    # Only attempt path completion if buffer starts with ./
-    if [[ $1 == ./* ]]; then
-      local prefix="${1##*/}"
-      local dir="$(pwd)"
-      local files=("$dir"/*(N))
-      local file
-      for file in "${files[@]}"; do
-        file="${file##*/}"
-        if [[ "$file" == "$prefix"* && "$file" != "$prefix" ]]; then
-          echo "./$file"
-          return
-        fi
-      done
-    fi
-  }
-
-  # Make suggestion style more visible
-  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=8,bold"
+  # Make suggestion style more visible but not intrusive
+  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=8"
 fi
 
 # fzf configuration (similar to fzf.fish)
@@ -186,12 +176,23 @@ alias gl='git pull'
 alias gd='git diff'
 alias gco='git checkout'
 alias gb='git branch'
+alias glog='git log --oneline --graph --decorate'
+alias gstash='git stash'
+alias gpop='git stash pop'
+
+
+# Quick navigation
+alias h='history | tail -20'  # Recent history
+alias ports='lsof -i -P | grep LISTEN'  # Show listening ports
+alias myip='curl -s ifconfig.me'        # Get external IP
+alias localip='ipconfig getifaddr en0'  # Get local IP
+
+# Development shortcuts
+alias reload='source ~/.zshrc'
+alias editrc='$EDITOR ~/.zshrc'
+alias path='echo $PATH | tr ":" "\n"'  # Pretty print PATH
 
 # ===== Functions =====
-# Fish-like directory listing when changing directories
-function cd {
-  builtin cd "$@" && ls
-}
 
 # Create a directory and cd into it
 function mkcd {
@@ -223,6 +224,43 @@ function extract {
 # Interactive alias explorer
 function aliases() {
   alias | fzf --height 50% | cut -d= -f1 | tr -d "'" | xargs -I{} echo "💡 {} is defined as: $(alias {} | cut -d= -f2 | tr -d "'")"
+}
+
+
+# Quick project switcher
+function proj() {
+  local project_dirs=("$HOME/Projects" "$HOME/projects" "$HOME/code" "$HOME/dev")
+  local selected
+  
+  for dir in "${project_dirs[@]}"; do
+    if [[ -d "$dir" ]]; then
+      if command -v fzf &>/dev/null; then
+        selected=$(find "$dir" -maxdepth 2 -type d -name ".git" | sed 's|/.git||' | fzf --prompt="Project: ")
+        [[ -n "$selected" ]] && cd "$selected"
+      else
+        echo "Available projects in $dir:"
+        ls -1 "$dir"
+      fi
+      return
+    fi
+  done
+  echo "No project directories found"
+}
+
+# Weather function (non-intrusive)
+function weather() {
+  local location="${1:-}"
+  curl -s "wttr.in/${location}?format=3"
+}
+
+# Git status for all repos in current directory
+function gstatus_all() {
+  for dir in */; do
+    if [[ -d "$dir/.git" ]]; then
+      echo "\n📁 $dir"
+      git -C "$dir" status --porcelain | head -5
+    fi
+  done
 }
 
 # ===== Environment Variables =====
@@ -305,3 +343,28 @@ fi
 
 # Performance profiling (uncomment to enable)
 # zprof
+
+# Task Master aliases added on 4/15/2025
+alias tm='task-master'
+alias taskmaster='task-master'
+
+# Performance tweaks
+# Disable global RCS files for faster startup
+unsetopt GLOBAL_RCS
+
+# Better job control
+setopt LONG_LIST_JOBS     # List jobs in long format
+setopt AUTO_RESUME        # Resume stopped jobs with command name
+setopt NOTIFY             # Report status of background jobs immediately
+
+# Smart case completion
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' '+m:{A-Z}={a-z}'
+
+# Better file completion
+zstyle ':completion:*:*:*:*:descriptions' format '%F{green}-- %d --%f'
+zstyle ':completion:*:*:*:*:corrections' format '%F{yellow}!- %d (errors: %e) -!%f'
+zstyle ':completion:*:messages' format ' %F{purple} -- %d --%f'
+zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
+
+# Deno environment
+. "/Users/eugeneistrach/.deno/env"
